@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel Squadra Maceió</title>
+<style>
+  :root {
+    --bg:          #1a1a1a;
+    --surface:     #242424;
+    --surface-2:   #2e2e2e;
+    --border:      #333333;
+    --accent:      #00d4aa;
+    --accent-dim:  rgba(0,212,170,0.12);
+    --accent-glow: rgba(0,212,170,0.25);
+    --text:        #ffffff;
+    --text-muted:  #888888;
+    --text-dim:    #444444;
+    --danger:      #ff6b6b;
+    --warning:     #f59e0b;
+    --info:        #60a5fa;
+    --pad:         20px;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: var(--pad);
+  }
+
+  /* ── LAYOUT ─────────────────────────────────── */
+  .wrap { max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+  @media (max-width: 720px) {
+    .row2 { grid-template-columns: 1fr; }
+    .row3 { grid-template-columns: 1fr 1fr; }
+    .gauge-grid { grid-template-columns: 1fr 1fr !important; }
+  }
+  @media (max-width: 420px) {
+    .row3 { grid-template-columns: 1fr; }
+    .gauge-grid { grid-template-columns: 1fr !important; }
+  }
+
+  /* ── CARD BASE ───────────────────────────────── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: var(--pad);
+    transition: border-color .2s, transform .2s, box-shadow .2s;
+  }
+  .card:hover {
+    border-color: rgba(0,212,170,0.35);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 28px rgba(0,212,170,0.08);
+  }
+
+  /* ── LABELS ──────────────────────────────────── */
+  .section-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-label::before {
+    content: '';
+    display: inline-block;
+    width: 3px;
+    height: 12px;
+    background: var(--accent);
+    border-radius: 2px;
+  }
+  .hint {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+    margin-top: 6px;
+  }
+
+  /* ── HEADER ──────────────────────────────────── */
+  .header {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: var(--pad) 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .header-left h1 {
+    font-size: 1.7rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--text);
+  }
+  .header-left h1 span { color: var(--accent); }
+  .header-left p {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+  .header-tags { display: flex; gap: 8px; flex-wrap: wrap; }
+  .tag {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 4px 12px;
+    border-radius: 99px;
+    text-transform: uppercase;
+  }
+  .tag-red    { background: rgba(255,107,107,0.15); color: #ff6b6b; border: 1px solid rgba(255,107,107,0.3); }
+  .tag-green  { background: var(--accent-dim);       color: var(--accent); border: 1px solid rgba(0,212,170,0.3); }
+  .tag-yellow { background: rgba(245,158,11,0.15);   color: #f59e0b; border: 1px solid rgba(245,158,11,0.3); }
+
+  /* ── GAUGE ───────────────────────────────────── */
+  .gauge-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 20px;
+  }
+  .gauge-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px var(--pad) 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: border-color .2s, transform .2s, box-shadow .2s;
+    cursor: default;
+  }
+  .gauge-card:hover {
+    border-color: rgba(0,212,170,0.35);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 28px rgba(0,212,170,0.08);
+  }
+  .gauge-card .g-title {
+    font-size: 0.62rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+    text-align: center;
+  }
+  .gauge-svg { width: 100%; max-width: 160px; }
+  .gauge-card .g-hint {
+    font-size: 0.67rem;
+    color: var(--text-muted);
+    text-align: center;
+    margin-top: 6px;
+    line-height: 1.4;
+  }
+
+  /* ── FUNIL ───────────────────────────────────── */
+  .funnel-flow {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 4px;
+  }
+  .f-step {
+    border-radius: 8px;
+    padding: 12px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background .2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .f-step::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    border-radius: 3px 0 0 3px;
+  }
+  .f-step:hover { filter: brightness(1.1); }
+  .f-step .f-left { display: flex; flex-direction: column; gap: 2px; }
+  .f-step .f-name { font-size: 0.8rem; color: #ccc; }
+  .f-step .f-desc { font-size: 0.65rem; color: var(--text-dim); }
+  .f-step .f-val  { font-size: 0.9rem; font-weight: 700; }
+  .f-s1 { background: #1e2e26; } .f-s1::before { background: var(--accent); }
+  .f-s2 { background: #1c2730; } .f-s2::before { background: var(--info); }
+  .f-s3 { background: #1e1e28; } .f-s3::before { background: var(--warning); }
+  .f-s4 { background: #1e2820; border: 1px solid rgba(0,212,170,0.2); } .f-s4::before { background: var(--accent); }
+  .f-s4 .f-val { color: var(--accent); }
+  .f-arrow { text-align: center; font-size: 0.65rem; color: var(--text-dim); padding: 1px 0; }
+  .f-alert {
+    margin-top: 10px;
+    background: rgba(255,107,107,0.08);
+    border: 1px solid rgba(255,107,107,0.2);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 0.72rem;
+    color: #ff9999;
+    line-height: 1.5;
+    text-align: center;
+  }
+  .f-alert strong { color: #ff6b6b; }
+
+  /* ── BARRAS HORIZONTAIS ──────────────────────── */
+  .bar-item { margin-bottom: 16px; }
+  .bar-item:last-child { margin-bottom: 0; }
+  .bar-top { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 6px; }
+  .bar-name { font-size: 0.78rem; color: #ccc; font-weight: 500; }
+  .bar-sub  { font-size: 0.65rem; color: var(--text-muted); }
+  .bar-pct  { font-size: 0.8rem; font-weight: 700; }
+  .bar-track {
+    width: 100%;
+    height: 7px;
+    background: var(--surface-2);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 1.2s cubic-bezier(.25,.8,.25,1);
+    width: 0;
+  }
+
+  /* ── DONUT ───────────────────────────────────── */
+  .donut-wrap { display: flex; align-items: center; justify-content: center; gap: 28px; flex-wrap: wrap; margin-top: 8px; }
+  .donut-chart {
+    position: relative;
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: conic-gradient(
+      var(--accent)  0deg   90deg,
+      var(--warning) 90deg  180deg,
+      var(--warning) 180deg 270deg,
+      var(--danger)  270deg 360deg
+    );
+    transition: transform .2s;
+  }
+  .donut-chart:hover { transform: scale(1.04); }
+  .donut-hole {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%,-50%);
+    width: 84px; height: 84px;
+    background: var(--surface);
+    border-radius: 50%;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 1px;
+  }
+  .donut-hole .d-val { font-size: 1.3rem; font-weight: 700; color: var(--accent); line-height: 1; }
+  .donut-hole .d-lbl { font-size: 0.55rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); }
+  .donut-legend { display: flex; flex-direction: column; gap: 10px; }
+  .legend-item { display: flex; align-items: center; gap: 8px; cursor: default; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .legend-text { display: flex; flex-direction: column; gap: 1px; }
+  .legend-name { font-size: 0.75rem; color: #ccc; }
+  .legend-desc { font-size: 0.62rem; color: var(--text-muted); }
+  .legend-status {
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 99px;
+    margin-left: auto;
+  }
+  .s-active  { background: var(--accent-dim); color: var(--accent); }
+  .s-partial { background: rgba(245,158,11,0.12); color: #f59e0b; }
+  .s-off     { background: rgba(255,107,107,0.12); color: #ff6b6b; }
+
+  /* ── EVENTOS ─────────────────────────────────── */
+  .event-table { width: 100%; border-collapse: collapse; }
+  .event-table th {
+    font-size: 0.62rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    text-align: left;
+    padding: 0 0 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .event-table th:last-child { text-align: right; }
+  .event-table td {
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(51,51,51,0.5);
+    vertical-align: top;
+  }
+  .event-table tr:last-child td { border-bottom: none; }
+  .event-table tr:hover td { background: rgba(255,255,255,0.02); }
+  .e-name { font-size: 0.8rem; color: #ccc; font-weight: 500; }
+  .e-desc { font-size: 0.65rem; color: var(--text-muted); margin-top: 2px; }
+  .e-count { font-size: 0.85rem; font-weight: 700; text-align: right; color: var(--text); }
+  .e-badge {
+    display: inline-block;
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    background: rgba(0,212,170,0.12);
+    color: var(--accent);
+    padding: 2px 8px;
+    border-radius: 99px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+
+  /* ── IA ANALYSIS ─────────────────────────────── */
+  .ia-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 600px) { .ia-grid { grid-template-columns: 1fr; } }
+
+  .ia-header-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+  .ia-header-row .ia-badge {
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 99px;
+    background: var(--accent-dim);
+    color: var(--accent);
+    border: 1px solid rgba(0,212,170,0.25);
+  }
+  .ia-model { font-size: 0.68rem; color: var(--text-muted); }
+  .ia-intro-text { font-size: 0.73rem; color: var(--text-muted); line-height: 1.55; margin-bottom: 16px; }
+
+  .ia-card {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    transition: border-color .2s, transform .2s;
+  }
+  .ia-card:hover {
+    border-color: rgba(0,212,170,0.25);
+    transform: translateY(-1px);
+  }
+  .ia-card .ic-label {
+    font-size: 0.62rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .ia-card .ic-text {
+    font-size: 0.78rem;
+    color: #bbb;
+    line-height: 1.65;
+  }
+  .ia-card .ic-text strong { color: var(--text); }
+
+  .action-list { list-style: none; display: flex; flex-direction: column; gap: 9px; margin-top: 2px; }
+  .action-list li { display: flex; gap: 9px; font-size: 0.77rem; color: #bbb; line-height: 1.5; }
+  .action-num {
+    background: var(--accent);
+    color: #000;
+    font-size: 0.6rem;
+    font-weight: 700;
+    min-width: 18px; height: 18px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .ia-quote {
+    border-left: 3px solid var(--accent);
+    padding-left: 12px;
+    font-style: italic;
+    color: #aaa;
+  }
+
+  /* ── ADS STATUS ──────────────────────────────── */
+  .ads-row { display: flex; align-items: flex-start; gap: 20px; flex-wrap: wrap; }
+  .ads-main { flex: 1; min-width: 220px; }
+  .ads-status-line { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .pulse-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #ff6b6b;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .pulse-dot::after {
+    content: '';
+    position: absolute;
+    top: -3px; left: -3px;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: rgba(255,107,107,0.2);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100% { transform: scale(1); opacity:.7; } 50% { transform: scale(1.4); opacity:0; } }
+  .ads-label { font-size: 0.72rem; font-weight: 700; color: #ff6b6b; text-transform: uppercase; letter-spacing: 1px; }
+  .ads-explain { font-size: 0.75rem; color: var(--text-muted); line-height: 1.55; margin-bottom: 14px; }
+  .ads-thresholds { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  @media (max-width: 420px) { .ads-thresholds { grid-template-columns: 1fr; } }
+  .ads-thr-item {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+  .ads-thr-label { font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3px; }
+  .ads-thr-val   { font-size: 0.82rem; font-weight: 700; color: #f59e0b; }
+
+  /* ── FOOTER ──────────────────────────────────── */
+  .footer { text-align: center; font-size: 0.65rem; color: var(--text-dim); padding-top: 8px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ══ HEADER ════════════════════════════════════ -->
+  <div class="header">
+    <div class="header-left">
+      <h1>SQUADRA <span>MACEIÓ</span></h1>
+      <p>Painel de Inteligência Digital &nbsp;·&nbsp; Gerado em 22/03/2026 às 12:37 &nbsp;·&nbsp; Dados dos últimos 30 dias via Google Analytics 4</p>
+    </div>
+    <div class="header-tags">
+      <span class="tag tag-green">GA4 Ativo</span>
+      <span class="tag tag-green">GTM Configurado</span>
+      <span class="tag tag-yellow">Blog em Construção</span>
+      <span class="tag tag-red">Ads Inativo</span>
+    </div>
+  </div>
+
+  <!-- ══ KPI GAUGES ═════════════════════════════════ -->
+  <div class="gauge-grid">
+
+    <div class="gauge-card">
+      <div class="g-title">Sessões — 30 dias</div>
+      <svg class="gauge-svg" viewBox="0 0 200 120">
+        <path d="M 15,110 A 85,85 0 0,1 185,110" fill="none" stroke="#2e2e2e" stroke-width="14" stroke-linecap="round"/>
+        <path id="g-sessions" d="M 15,110 A 85,85 0 0,1 185,110" fill="none" stroke="#ff6b6b" stroke-width="14" stroke-linecap="round" stroke-dasharray="0 267"/>
+        <text x="100" y="87" text-anchor="middle" fill="#ffffff" font-size="32" font-weight="700" font-family="Segoe UI,sans-serif">13</text>
+        <text x="100" y="104" text-anchor="middle" fill="#888" font-size="9.5" font-family="Segoe UI,sans-serif">TOTAL NO MÊS</text>
+      </svg>
+      <div class="g-hint">Número de visitas ao site.<br>Meta inicial: <strong style="color:#ccc">200/mês</strong></div>
+    </div>
+
+    <div class="gauge-card">
+      <div class="g-title">Taxa de Rejeição</div>
+      <svg class="gauge-svg" viewBox="0 0 200 120">
+        <path d="M 15,110 A 85,85 0 0,1 185,110" fill="none" stroke="#2e2e2e" stroke-width="14" stroke-linecap="round"/>
+        <path id="g-bounce" d="M 15,110 A 85,85 0 0,1 185,110" fill="none" stroke="#ff6b6b" stroke-width="14" stroke-linecap="round" stroke-dasharray="0 267"/>
+        <text x="100" y="87" text-anchor="middle" fill="#ffffff" font-size="28" font-weight="700" font-family="Segoe UI,sans-serif">77.8%</text>
+        <text x="100" y="104" text-anchor="middle" fill="#888" font-size="9.5" font-family="Segoe UI,sans-serif">SAEM SEM CLICAR</text>
+      </svg>
+      <div class="g-hint">% que entra e sai sem interagir.<br>Ideal: <strong style="color:#ccc">abaixo de 50%</strong></div>
+    </div>
+
+    <div class="gauge-card">
+      <div class="g-title">Duração Média</div>
+      <svg class="gauge-svg" viewBox="0 0 200 120">
+        <path d="M 15,110 A 85,85 0 0,1 185,110" fill="none" stroke="#2e2e2e" stroke-width="14" stroke-linecap="round"/>
+        <path id="g-duration" d="M 15,110 A 85,85 0 0,1 185,110" fill="none" stroke="#f59e0b" stroke-width="14" stroke-linecap="round" stroke-dasharray="0 267"/>
+        <text x="100" y="87" text-anchor="middle" fill="#ffffff" font-size="32" font-weight="700" font-family="Segoe UI,sans-serif">3min</text>
+        <text x="100" y="104" text-anchor="middle" fill="#888" font-size="9.5" font-family="Segoe UI,sans-serif">TEMPO NO SITE</text>
+      </svg>
+      <div class="g-hint">Quem fica, lê de verdade.<br>Sinal positivo de engajamento.</div>
+    </div>
+
+    <div class="gauge-card">
+      <div class="g-title">Cliques no WhatsApp</div>
+      <svg class="gauge-svg" viewBox="0 0 200 120">
+        <path d="M 15,110 A 85,85 0 0,1 185,110" fill="none" stroke="#2e2e2e" stroke-width="14" stroke-linecap="round"/>
+        <path id="g-wpp" d="M 15,110 A 85,85 0 0,1 185,110" fill="none" stroke="#ff6b6b" stroke-width="14" stroke-linecap="round" stroke-dasharray="0 267"/>
+        <text x="100" y="87" text-anchor="middle" fill="#ffffff" font-size="40" font-weight="700" font-family="Segoe UI,sans-serif">1</text>
+        <text x="100" y="104" text-anchor="middle" fill="#888" font-size="9.5" font-family="Segoe UI,sans-serif">CONTATOS GERADOS</text>
+      </svg>
+      <div class="g-hint">Objetivo final do site.<br>Cada clique = potencial serviço.</div>
+    </div>
+
+    <div class="gauge-card">
+      <div class="g-title">Taxa de Conversão</div>
+      <svg class="gauge-svg" viewBox="0 0 200 120">
+        <path d="M 15,110 A 85,85 0 0,1 185,110" fill="none" stroke="#2e2e2e" stroke-width="14" stroke-linecap="round"/>
+        <path id="g-conv" d="M 15,110 A 85,85 0 0,1 185,110" fill="none" stroke="#00d4aa" stroke-width="14" stroke-linecap="round" stroke-dasharray="0 267"/>
+        <text x="100" y="87" text-anchor="middle" fill="#ffffff" font-size="28" font-weight="700" font-family="Segoe UI,sans-serif">7.7%</text>
+        <text x="100" y="104" text-anchor="middle" fill="#888" font-size="9.5" font-family="Segoe UI,sans-serif">VISITA → WHATSAPP</text>
+      </svg>
+      <div class="g-hint">Ponto forte: quem chega, converte.<br><strong style="color:#00d4aa">Referência de mercado: 3–5%</strong></div>
+    </div>
+
+  </div>
+
+  <!-- ══ FUNIL + TRÁFEGO ════════════════════════════ -->
+  <div class="row2">
+
+    <div class="card">
+      <div class="section-label">Funil de Conversão</div>
+      <div class="hint" style="margin-bottom:14px">O caminho do cliente: começa buscando no Google e termina clicando no WhatsApp. Cada etapa perde pessoas — o objetivo é perder o mínimo.</div>
+      <div class="funnel-flow">
+        <div class="f-step f-s1">
+          <div class="f-left">
+            <span class="f-name">🔍 Google / Google Meu Negócio</span>
+            <span class="f-desc">Pessoa busca "impermeabilização Maceió"</span>
+          </div>
+          <span class="f-val" style="color:#555">— vazio</span>
+        </div>
+        <div class="f-arrow">↓ clica no site</div>
+        <div class="f-step f-s2">
+          <div class="f-left">
+            <span class="f-name">🖥️ Landing Page</span>
+            <span class="f-desc">Vê a página da Squadra</span>
+          </div>
+          <span class="f-val" style="color:var(--info)">13 visitas</span>
+        </div>
+        <div class="f-arrow">↓ lê e se interessa</div>
+        <div class="f-step f-s3">
+          <div class="f-left">
+            <span class="f-name">📖 Engajamento</span>
+            <span class="f-desc">Rola a página, lê o conteúdo</span>
+          </div>
+          <span class="f-val" style="color:var(--warning)">4 pessoas</span>
+        </div>
+        <div class="f-arrow">↓ decide entrar em contato</div>
+        <div class="f-step f-s4">
+          <div class="f-left">
+            <span class="f-name">💬 WhatsApp</span>
+            <span class="f-desc">Clica e vira contato real de serviço</span>
+          </div>
+          <span class="f-val">1 clique</span>
+        </div>
+      </div>
+      <div class="f-alert">
+        Topo do funil vazio — quase ninguém chega.<br>
+        <strong>Solução: blog no ar + GMN otimizado com avaliações.</strong>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-label">Origem do Tráfego — 30 dias</div>
+      <div class="hint" style="margin-bottom:18px">Como cada pessoa chegou ao site. O ideal é que o <strong style="color:#ccc">Orgânico</strong> (Google) seja a maior fatia — significa que o site está sendo encontrado sem pagar.</div>
+
+      <div class="bar-item">
+        <div class="bar-top">
+          <div>
+            <div class="bar-name">Direto</div>
+            <div class="bar-sub">Digitou o endereço ou veio de link salvo — já conhecia a Squadra</div>
+          </div>
+          <span class="bar-pct" style="color:var(--info)">69%</span>
+        </div>
+        <div class="bar-track"><div class="bar-fill" data-w="69" style="background:var(--info)"></div></div>
+      </div>
+
+      <div class="bar-item">
+        <div class="bar-top">
+          <div>
+            <div class="bar-name">Orgânico</div>
+            <div class="bar-sub">Encontrou no Google sem anúncio — este deve crescer com o blog</div>
+          </div>
+          <span class="bar-pct" style="color:var(--accent)">23%</span>
+        </div>
+        <div class="bar-track"><div class="bar-fill" data-w="23" style="background:var(--accent)"></div></div>
+      </div>
+
+      <div class="bar-item">
+        <div class="bar-top">
+          <div>
+            <div class="bar-name">Referência</div>
+            <div class="bar-sub">Clicou em um link em outro site ou rede social</div>
+          </div>
+          <span class="bar-pct" style="color:#a855f7">8%</span>
+        </div>
+        <div class="bar-track"><div class="bar-fill" data-w="8" style="background:#a855f7"></div></div>
+      </div>
+
+      <div class="section-label" style="margin-top:22px">Dispositivos — 30 dias</div>
+      <div class="hint" style="margin-bottom:16px">Saber o dispositivo define onde investir na experiência. Com 62% mobile, o site precisa funcionar perfeitamente no celular.</div>
+
+      <div class="bar-item">
+        <div class="bar-top">
+          <div>
+            <div class="bar-name">Mobile (celular)</div>
+            <div class="bar-sub">Maioria dos visitantes acessa pelo celular</div>
+          </div>
+          <span class="bar-pct" style="color:var(--warning)">62%</span>
+        </div>
+        <div class="bar-track"><div class="bar-fill" data-w="62" style="background:var(--warning)"></div></div>
+      </div>
+
+      <div class="bar-item">
+        <div class="bar-top">
+          <div>
+            <div class="bar-name">Desktop (computador)</div>
+            <div class="bar-sub">Acesso via notebook ou computador</div>
+          </div>
+          <span class="bar-pct" style="color:#06b6d4">38%</span>
+        </div>
+        <div class="bar-track"><div class="bar-fill" data-w="38" style="background:#06b6d4"></div></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══ STATUS MÍDIAS + EVENTOS ════════════════════ -->
+  <div class="row2">
+
+    <div class="card">
+      <div class="section-label">Status das Mídias Digitais</div>
+      <div class="hint" style="margin-bottom:18px">O ecossistema digital da Squadra tem 4 canais. Cada um tem um papel diferente em trazer clientes. O donut mostra quantos estão operando de verdade.</div>
+      <div class="donut-wrap">
+        <div class="donut-chart">
+          <div class="donut-hole">
+            <span class="d-val">25%</span>
+            <span class="d-lbl">Ativo</span>
+          </div>
+        </div>
+        <div class="donut-legend">
+          <div class="legend-item">
+            <div class="legend-dot" style="background:var(--accent)"></div>
+            <div class="legend-text">
+              <span class="legend-name">Landing Page</span>
+              <span class="legend-desc">squadramaceio.com.br</span>
+            </div>
+            <span class="legend-status s-active">Ativa</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:var(--warning)"></div>
+            <div class="legend-text">
+              <span class="legend-name">Google Meu Negócio</span>
+              <span class="legend-desc">Configurado, sem avaliações</span>
+            </div>
+            <span class="legend-status s-partial">Parcial</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:var(--warning)"></div>
+            <div class="legend-text">
+              <span class="legend-name">Blog</span>
+              <span class="legend-desc">10 posts prontos, aguardando entrega</span>
+            </div>
+            <span class="legend-status s-partial">Pendente</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:var(--danger)"></div>
+            <div class="legend-text">
+              <span class="legend-name">Google Ads</span>
+              <span class="legend-desc">Aguardando volume orgânico</span>
+            </div>
+            <span class="legend-status s-off">Inativo</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-label">Ações Registradas no Site — 30 dias</div>
+      <div class="hint" style="margin-bottom:14px">Cada ação de um visitante é registrada como "evento". Isso mostra o comportamento real — se rolam a página, se leem o conteúdo, se clicam no botão.</div>
+      <table class="event-table">
+        <thead>
+          <tr>
+            <th>Evento</th>
+            <th>Qtd.</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><div class="e-name">Visualização de página</div><div class="e-desc">Página foi carregada pelo visitante</div></td>
+            <td><div class="e-count">15</div></td>
+          </tr>
+          <tr>
+            <td><div class="e-name">Início de sessão</div><div class="e-desc">Uma nova visita começou</div></td>
+            <td><div class="e-count">13</div></td>
+          </tr>
+          <tr>
+            <td><div class="e-name">Primeira visita</div><div class="e-desc">Pessoa que nunca tinha entrado antes</div></td>
+            <td><div class="e-count">5</div></td>
+          </tr>
+          <tr>
+            <td><div class="e-name">Engajamento</div><div class="e-desc">Ficou mais de 10s ou interagiu com algo</div></td>
+            <td><div class="e-count">4</div></td>
+          </tr>
+          <tr>
+            <td><div class="e-name">Profundidade de rolagem</div><div class="e-desc">Rolou até 25%, 50%, 75% ou 90% da página</div></td>
+            <td><div class="e-count">3</div></td>
+          </tr>
+          <tr>
+            <td><div class="e-name">Rolagem</div><div class="e-desc">Qualquer movimento de rolagem</div></td>
+            <td><div class="e-count">2</div></td>
+          </tr>
+          <tr>
+            <td><div class="e-name">Clique</div><div class="e-desc">Clicou em algum elemento da página</div></td>
+            <td><div class="e-count">1</div></td>
+          </tr>
+          <tr>
+            <td>
+              <div class="e-name">Contato WhatsApp <span class="e-badge">Conversão</span></div>
+              <div class="e-desc">Clicou no botão do WhatsApp — objetivo final</div>
+            </td>
+            <td><div class="e-count" style="color:var(--accent)">1</div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <!-- ══ ANÁLISE IA ═════════════════════════════════ -->
+  <div class="card">
+    <div class="ia-header-row">
+      <span class="ia-badge">🤖 Análise IA</span>
+      <span class="ia-model">Gemini 2.5 Flash · Consultor de Marketing Digital</span>
+    </div>
+    <div class="ia-intro-text">Os dados do GA4 foram enviados à IA, que analisou o funil, identificou o gargalo e gerou um plano de ação para a próxima semana. Contexto considerado: negócio de impermeabilização de urgência em Maceió, conversão via WhatsApp, sem tráfego pago ativo.</div>
+    <div class="ia-grid">
+
+      <div class="ia-card">
+        <div class="ic-label">📉 Diagnóstico</div>
+        <div class="ic-text">Volume extremamente baixo: 13 sessões em 30 dias. A taxa de rejeição de 77.8% é alta, mas a <strong>conversão de 7.7%</strong> é um bom sinal — o site convence quem chega. O problema não é a qualidade da página. É que <strong>quase ninguém chega até ela</strong>. O GMN está configurado mas não gera fluxo. 69% do tráfego é Direto — só quem já conhece a Squadra está chegando.</div>
+      </div>
+
+      <div class="ia-card">
+        <div class="ic-label">🛑 Principal Gargalo</div>
+        <div class="ic-text"><strong>Ausência de visibilidade no Google.</strong> Sem volume de visitantes orgânicos, qualquer melhoria no site tem impacto quase zero. O topo do funil está vazio. Resolver a aquisição de tráfego é a prioridade número um antes de qualquer outra otimização.</div>
+      </div>
+
+      <div class="ia-card">
+        <div class="ic-label">🚀 Top 3 Ações — Próxima Semana</div>
+        <ul class="action-list">
+          <li><span class="action-num">1</span>Otimizar o GMN: pedir avaliações a clientes recentes, adicionar fotos de serviços reais, criar postagens semanais com senso de urgência.</li>
+          <li><span class="action-num">2</span>Publicar o blog com os 10 posts prontos — é o que fará o Google indexar a Squadra para termos de busca relevantes.</li>
+          <li><span class="action-num">3</span>Garantir botão WhatsApp visível sem rolar no celular. 62% dos acessos são mobile.</li>
+        </ul>
+      </div>
+
+      <div class="ia-card">
+        <div class="ic-label">💡 Pergunta Estratégica</div>
+        <div class="ic-text ia-quote">Como comunicar de forma mais eficaz a solução imediata para os momentos de desespero que seus clientes enfrentam ao buscar "impermeabilização Maceió"? A urgência do serviço precisa ser sentida na primeira linha do site.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══ ADS STATUS ═════════════════════════════════ -->
+  <div class="card">
+    <div class="section-label">Tráfego Pago — Google Ads</div>
+    <div class="ads-row">
+      <div class="ads-main">
+        <div class="ads-status-line">
+          <div class="pulse-dot"></div>
+          <span class="ads-label">Não ativo — aguardando maturidade orgânica</span>
+        </div>
+        <div class="ads-explain">
+          Ativar anúncios agora seria desperdiçar dinheiro. Com 13 sessões/mês e rejeição de 77.8%, o funil não está pronto para escalar. A IA recomenda aguardar até o site e o GMN converterem bem organicamente antes de investir em tráfego pago. Anúncio leva pessoas à porta — a porta precisa estar funcionando primeiro.
+        </div>
+        <div class="ads-thresholds">
+          <div class="ads-thr-item">
+            <div class="ads-thr-label">Sessões mínimas para ativar</div>
+            <div class="ads-thr-val">30–50 por semana</div>
+          </div>
+          <div class="ads-thr-item">
+            <div class="ads-thr-label">Taxa de rejeição máxima</div>
+            <div class="ads-thr-val">Abaixo de 50%</div>
+          </div>
+          <div class="ads-thr-item">
+            <div class="ads-thr-label">Orçamento inicial</div>
+            <div class="ads-thr-val">R$ 20–30/dia</div>
+          </div>
+          <div class="ads-thr-item">
+            <div class="ads-thr-label">Palavra-chave principal</div>
+            <div class="ads-thr-val">"Impermeabilização Maceió"</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">Squadra Maceió &nbsp;·&nbsp; Painel de Inteligência Digital &nbsp;·&nbsp; Google Analytics 4 + Gemini 2.5 Flash</div>
+
+</div>
+
+<script>
+  // ── GAUGE ANIMATION ─────────────────────────────────
+  const PATH_LEN = 267;
+
+  function animateGauge(id, pct) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const target = PATH_LEN * Math.min(pct, 100) / 100;
+    const start  = performance.now();
+    const dur    = 1100;
+    (function tick(now) {
+      const t = Math.min((now - start) / dur, 1);
+      const e = 1 - Math.pow(1 - t, 3); // ease-out cubic
+      el.style.strokeDasharray = `${target * e} ${PATH_LEN}`;
+      if (t < 1) requestAnimationFrame(tick);
+    })(start);
+  }
+
+  // pct = how "full" the gauge looks (not always same as raw %)
+  animateGauge('g-sessions',  6.5);   // 13/200 target
+  animateGauge('g-bounce',   77.8);   // raw %, high = bad
+  animateGauge('g-duration',  60);    // 3min / 5min ideal
+  animateGauge('g-wpp',       10);    // 1/10 target
+  animateGauge('g-conv',      77);    // 7.7% / 10% benchmark
+
+  // ── BAR ANIMATION ───────────────────────────────────
+  document.querySelectorAll('.bar-fill[data-w]').forEach(el => {
+    const w   = el.dataset.w;
+    const start = performance.now();
+    const dur = 1000;
+    (function tick(now) {
+      const t = Math.min((now - start) / dur, 1);
+      const e = 1 - Math.pow(1 - t, 3);
+      el.style.width = (w * e) + '%';
+      if (t < 1) requestAnimationFrame(tick);
+    })(start);
+  });
+</script>
+</body>
+</html>
